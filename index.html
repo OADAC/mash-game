@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Mashmellous · La Gran Tarta</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #5b3d52; --ink2: #8a6a80; --cream: #fff7ee; --pink: #ff8fab; --pink2: #ff6f91;
+    --mint: #8fd8c0; --butter: #ffd98e; --lav: #b9a3ff; --sky: #9fd9ff;
+    --font: Fredoka, "Baloo 2", "Nunito", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #cfe9df; font-family: var(--font); color: var(--ink); user-select: none; -webkit-user-select: none; }
+  #game { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; transition: filter .45s ease; touch-action: none; }
+  #game.blur { filter: blur(7px) saturate(1.1) brightness(0.92); }
+  button { font-family: var(--font); cursor: pointer; }
+
+  /* ——— botones de plastilina ——— */
+  .clay {
+    border: 0; border-radius: 999px; padding: 16px 38px; font-size: 24px; font-weight: 700; color: #fff;
+    background: linear-gradient(180deg, #ffb0c4, var(--pink2)); letter-spacing: .5px;
+    box-shadow: inset 0 3px 0 rgba(255,255,255,.55), inset 0 -6px 0 rgba(160,40,80,.25), 0 8px 0 #d9557a, 0 14px 24px rgba(120,40,80,.3);
+    text-shadow: 0 2px 0 rgba(160,40,80,.35); transition: transform .12s, box-shadow .12s;
+  }
+  .clay:hover { transform: translateY(-2px) scale(1.03); }
+  .clay:active { transform: translateY(6px); box-shadow: inset 0 3px 0 rgba(255,255,255,.55), inset 0 -4px 0 rgba(160,40,80,.25), 0 2px 0 #d9557a, 0 6px 12px rgba(120,40,80,.3); }
+  .clay.mint { background: linear-gradient(180deg, #b8f0dc, #5cc4a4); box-shadow: inset 0 3px 0 rgba(255,255,255,.55), inset 0 -6px 0 rgba(20,100,80,.2), 0 8px 0 #3fa586, 0 14px 24px rgba(20,90,70,.25); text-shadow: 0 2px 0 rgba(20,100,80,.35); }
+  .clay.soft { background: linear-gradient(180deg, #fff, #f1e6ef); color: var(--ink); text-shadow: none; box-shadow: inset 0 3px 0 #fff, inset 0 -5px 0 rgba(120,80,110,.12), 0 7px 0 #d9c7d5, 0 12px 20px rgba(90,50,80,.2); }
+  .clay.small { font-size: 18px; padding: 11px 24px; }
+
+  .overlay { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity .4s ease; z-index: 10; padding: 16px; }
+  .overlay.open { opacity: 1; pointer-events: auto; }
+
+  /* ——— carga ——— */
+  #loading { background: radial-gradient(circle at 50% 40%, #fff7ee, #f6dfe8 60%, #cfe9df); flex-direction: column; gap: 22px; z-index: 50; }
+  #loading .blob { width: 90px; height: 96px; border-radius: 30px; background: linear-gradient(#fff, #f0e2da); box-shadow: 0 10px 0 #e5d2cb, 0 18px 30px rgba(90,50,80,.2); animation: squish 1s ease-in-out infinite; position: relative; }
+  #loading .blob::before, #loading .blob::after { content: ""; position: absolute; top: 38px; width: 8px; height: 12px; border-radius: 50%; background: var(--ink); }
+  #loading .blob::before { left: 28px; } #loading .blob::after { right: 28px; }
+  @keyframes squish { 0%,100% { transform: scale(1,1) translateY(0);} 30% { transform: scale(1.15,.85) translateY(8px);} 60% { transform: scale(.9,1.12) translateY(-26px);} }
+  .bar { width: min(340px, 70vw); height: 22px; border-radius: 99px; background: #fff; box-shadow: inset 0 3px 6px rgba(90,50,80,.15); overflow: hidden; padding: 4px; }
+  #load-bar { height: 100%; width: 0; border-radius: 99px; background: linear-gradient(90deg, var(--pink), var(--butter), var(--mint)); transition: width .2s; }
+  #loading p { margin: 0; font-weight: 600; color: var(--ink2); }
+
+  /* ——— título ——— */
+  #title { flex-direction: column; gap: 10px; background: radial-gradient(ellipse at 50% 42%, rgba(255,247,238,.55), rgba(255,247,238,0) 62%); }
+  .logo { font-size: clamp(54px, 11vw, 150px); font-weight: 700; line-height: .9; display: flex; flex-wrap: wrap; justify-content: center; letter-spacing: -2px; }
+  .logo span {
+    display: inline-block; color: var(--c); -webkit-text-stroke: 3px #fff; paint-order: stroke fill;
+    text-shadow: 0 2px 0 #fff, 0 6px 0 var(--d), 0 9px 0 var(--d), 0 18px 26px rgba(90,40,80,.35);
+    animation: bob 2.6s ease-in-out infinite; animation-delay: calc(var(--i) * .12s);
+  }
+  @keyframes bob { 0%,100% { transform: translateY(0) rotate(var(--r)); } 50% { transform: translateY(-12px) rotate(calc(var(--r) * -1)); } }
+  .subtitle { font-size: clamp(20px, 3.2vw, 34px); font-weight: 600; color: #fff; background: linear-gradient(180deg, #c7b3ff, #9c83f0); padding: 6px 26px 8px; border-radius: 99px; box-shadow: inset 0 3px 0 rgba(255,255,255,.5), 0 6px 0 #7f66d4, 0 12px 20px rgba(80,50,140,.3); transform: rotate(-2deg); margin: 6px 0 26px; }
+  .tbtns { display: flex; gap: 22px; flex-wrap: wrap; justify-content: center; }
+  #t-parade { position: absolute; bottom: 0; left: 0; right: 0; height: 22vh; display: flex; align-items: flex-end; justify-content: center; gap: 0; pointer-events: none; overflow: hidden; }
+  #t-parade img { height: var(--h, 13vh); margin: 0 -1.2vw; filter: drop-shadow(0 6px 8px rgba(90,40,80,.25)); animation: hop 1.8s ease-in-out infinite; animation-delay: calc(var(--i) * -0.23s); transform-origin: bottom center; }
+  @keyframes hop { 0%,100% { transform: translateY(0) scale(1,1);} 15% { transform: translateY(0) scale(1.06,.94);} 40% { transform: translateY(-14px) scale(.97,1.04);} 60% { transform: translateY(0) scale(1.04,.96);} }
+  .hint { font-weight: 600; color: var(--ink2); margin-top: 18px; font-size: 15px; background: rgba(255,255,255,.7); padding: 6px 16px; border-radius: 99px; }
+  .touch .hint.keys { display: none; }
+
+  /* ——— intro ——— */
+  #intro { background: rgba(40,20,40,.82); flex-direction: column; gap: 22px; z-index: 20; cursor: pointer; }
+  #intro video { width: min(640px, 86vw, 52vh); aspect-ratio: 1; object-fit: cover; border-radius: 36px; border: 6px solid #fff; box-shadow: 0 20px 60px rgba(0,0,0,.4); background: #cfe9df; }
+  #intro-text { max-width: 720px; min-height: 2.8em; text-align: center; color: #fff; font-size: clamp(19px, 2.6vw, 27px); font-weight: 500; line-height: 1.4; text-shadow: 0 2px 10px rgba(0,0,0,.4); }
+  #intro-dots { display: flex; gap: 8px; } #intro-dots i, .dots i { width: 10px; height: 10px; border-radius: 50%; background: rgba(255,255,255,.35); } #intro-dots i.on { background: #fff; width: 26px; border-radius: 99px; }
+  #intro-skip { position: absolute; top: 18px; right: 18px; }
+  .tap { color: rgba(255,255,255,.7); font-size: 14px; font-weight: 500; }
+
+  /* ——— HUD ——— */
+  #hud { position: fixed; top: 0; left: 0; right: 0; display: flex; justify-content: space-between; align-items: flex-start; padding: max(14px, env(safe-area-inset-top)) 16px 0; z-index: 5; pointer-events: none; opacity: 0; transition: opacity .4s; }
+  .playing #hud { opacity: 1; }
+  .hgroup { display: flex; gap: 10px; align-items: center; pointer-events: auto; }
+  .pill { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,.88); border-radius: 99px; padding: 6px 16px 6px 8px; font-weight: 700; font-size: 22px; box-shadow: inset 0 -4px 0 rgba(120,80,110,.1), 0 6px 14px rgba(90,50,80,.18); backdrop-filter: blur(6px); }
+  .pill .ico { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-size: 20px; }
+  .pill.pulse { animation: pulse .7s ease; }
+  @keyframes pulse { 40% { transform: scale(1.25); } }
+  #hud-hearts { display: flex; gap: 4px; padding: 4px 6px; }
+  #hud-hearts i { font-style: normal; font-size: 28px; line-height: 1; color: var(--pink2); text-shadow: 0 3px 0 #d9557a, 0 0 1px #fff; transition: transform .25s, color .25s; display: inline-block; }
+  #hud-hearts i:not(.on) { color: #eadde5; text-shadow: 0 3px 0 #d8c8d2; transform: scale(.8); }
+  .ibtn { width: 50px; height: 50px; border-radius: 50%; border: 0; background: rgba(255,255,255,.9); font-size: 22px; box-shadow: inset 0 -4px 0 rgba(120,80,110,.12), 0 6px 14px rgba(90,50,80,.18); display: grid; place-items: center; transition: transform .12s; color: var(--ink); }
+  .ibtn:active { transform: scale(.9); }
+  #btn-mute.off { opacity: .5; }
+  #btn-mute.off::after { content: ""; position: absolute; width: 30px; height: 3px; background: var(--ink); transform: rotate(-45deg); border-radius: 2px; }
+  #btn-mute { position: relative; }
+
+  #banner { position: fixed; top: 16%; left: 50%; transform: translate(-50%, -30px) scale(.8); opacity: 0; z-index: 6; text-align: center; pointer-events: none; transition: all .6s cubic-bezier(.3,1.6,.5,1); }
+  #banner.show { opacity: 1; transform: translate(-50%, 0) scale(1); }
+  #banner small { display: block; font-size: 18px; font-weight: 600; color: #fff; text-shadow: 0 2px 6px rgba(90,40,80,.5); letter-spacing: 3px; text-transform: uppercase; }
+  #banner b { display: block; font-size: clamp(26px, min(6vw, 9vh), 64px); white-space: nowrap; color: #fff; -webkit-text-stroke: 2px rgba(255,255,255,.9); text-shadow: 0 4px 0 var(--pink2), 0 8px 24px rgba(90,40,80,.4); }
+
+  /* ——— carta de encuentro ——— */
+  #encounter { z-index: 30; background: rgba(60,30,60,.25); }
+  #enc-card { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 26px; width: min(960px, 100%); max-height: 100%; overflow: hidden auto; background: var(--cream); border-radius: 40px; padding: 26px; box-shadow: inset 0 4px 0 #fff, inset 0 -10px 0 rgba(200,160,180,.25), 0 30px 80px rgba(60,20,60,.45); transform: scale(.7) rotate(-3deg); transition: transform .55s cubic-bezier(.3,1.7,.5,1); }
+  #encounter.open #enc-card { transform: scale(1) rotate(0); }
+  .vwrap { position: relative; border-radius: 30px; overflow: hidden; aspect-ratio: 1; background: #cfe9df; box-shadow: 0 0 0 6px #fff, 0 12px 30px rgba(90,40,80,.25); }
+  .vwrap video { width: 100%; height: 100%; object-fit: cover; display: block; }
+  #enc-new { position: absolute; top: 14px; left: 14px; background: var(--pink2); color: #fff; font-weight: 700; padding: 6px 16px; border-radius: 99px; box-shadow: 0 4px 0 #d9557a; animation: wig 1s ease-in-out infinite; }
+  @keyframes wig { 50% { transform: rotate(-6deg) scale(1.08); } }
+  .einfo { display: flex; flex-direction: column; gap: 12px; justify-content: center; min-width: 0; }
+  #enc-num { font-weight: 700; color: var(--ink2); letter-spacing: 2px; }
+  #enc-name { margin: 0; font-size: clamp(32px, 4.4vw, 52px); line-height: 1; color: var(--pink2); text-shadow: 0 3px 0 #ffd4de; }
+  #enc-kind { align-self: flex-start; background: #e6f7f0; color: #3f9a7d; font-weight: 600; padding: 5px 16px; border-radius: 99px; }
+  #enc-desc { font-size: 19px; line-height: 1.5; margin: 4px 0; color: var(--ink); }
+  #enc-stats { display: grid; gap: 8px; background: #fff; padding: 14px 18px; border-radius: 22px; box-shadow: inset 0 -4px 0 rgba(200,160,180,.18); }
+  #enc-stats div { display: flex; justify-content: space-between; align-items: center; font-weight: 600; font-size: 16px; }
+  #enc-stats em { display: flex; gap: 5px; }
+  #enc-stats i { width: 18px; height: 20px; border-radius: 7px; background: #eee3ea; }
+  #enc-stats i.on { background: linear-gradient(#ffc1d1, var(--pink)); box-shadow: inset 0 -3px 0 rgba(180,50,90,.25); }
+  #enc-btn { margin-top: 8px; align-self: flex-start; }
+  #confetti, #confetti-f { position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 2; }
+  #confetti i, #confetti-f i { position: absolute; top: 55%; width: 12px; height: 8px; border-radius: 3px; opacity: 0; animation: conf 1.6s cubic-bezier(.2,.7,.4,1) forwards; }
+  @keyframes conf { 0% { opacity: 1; transform: translate(0,0) rotate(0); } 100% { opacity: 0; transform: translate(var(--dx), calc(var(--dy) + 520px)) rotate(var(--r)); } }
+
+  /* ——— Mashmellopedia ——— */
+  #album { z-index: 25; background: rgba(60,30,60,.3); }
+  .panel { width: min(1080px, 100%); max-height: 100%; display: flex; flex-direction: column; background: var(--cream); border-radius: 40px; padding: 24px 26px; box-shadow: inset 0 4px 0 #fff, inset 0 -10px 0 rgba(200,160,180,.25), 0 30px 80px rgba(60,20,60,.45); transform: translateY(30px) scale(.95); transition: transform .45s cubic-bezier(.3,1.5,.5,1); }
+  .overlay.open .panel { transform: none; }
+  .phead { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+  .phead h2 { margin: 0; font-size: clamp(28px, 4vw, 44px); color: var(--pink2); text-shadow: 0 3px 0 #ffd4de; }
+  #album-count { font-weight: 600; color: var(--ink2); }
+  #album-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px; overflow: auto; padding: 6px 6px 12px; }
+  .acard { position: relative; border: 0; background: #fff; border-radius: 26px; padding: 14px 10px 14px; display: flex; flex-direction: column; align-items: center; gap: 4px; box-shadow: inset 0 -5px 0 rgba(200,160,180,.2), 0 6px 14px rgba(90,50,80,.12); transition: transform .15s; color: var(--ink); cursor: default; }
+  .acard.got { cursor: pointer; background: linear-gradient(180deg, #fff, #fff4f7); }
+  .acard.got:hover { transform: translateY(-5px) rotate(-1.5deg); }
+  .acard img { height: 120px; max-width: 100%; object-fit: contain; filter: drop-shadow(0 6px 6px rgba(90,40,80,.2)); }
+  .acard:not(.got) img { filter: brightness(0) opacity(.18); }
+  .acard b { font-size: 17px; text-align: center; }
+  .acard small { color: var(--ink2); font-size: 13px; text-align: center; }
+  .acard .num { position: absolute; top: 10px; left: 14px; font-size: 13px; font-weight: 700; color: #d7b9c8; }
+
+  /* ——— pausa ——— */
+  #pause { z-index: 25; flex-direction: column; gap: 18px; background: rgba(60,30,60,.25); }
+  #pause h2 { font-size: 64px; margin: 0; color: #fff; text-shadow: 0 5px 0 var(--pink2), 0 12px 30px rgba(90,40,80,.4); }
+  .ctrls { background: rgba(255,255,255,.9); border-radius: 26px; padding: 14px 22px; display: grid; grid-template-columns: auto auto; gap: 6px 18px; font-weight: 500; }
+  .ctrls kbd { font-family: var(--font); font-weight: 700; background: #f3e6ee; padding: 2px 10px; border-radius: 8px; box-shadow: 0 3px 0 #dccbd6; }
+
+  /* ——— final ——— */
+  #finale { z-index: 30; background: rgba(60,30,60,.2); }
+  #fin-card { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 26px; width: min(1000px, 100%); max-height: 100%; overflow: hidden auto; background: var(--cream); border-radius: 40px; padding: 26px; box-shadow: inset 0 4px 0 #fff, inset 0 -10px 0 rgba(200,160,180,.25), 0 30px 80px rgba(60,20,60,.45); transform: scale(.7); transition: transform .6s cubic-bezier(.3,1.7,.5,1); }
+  #finale.open #fin-card { transform: none; }
+  #fin-title { margin: 0; font-size: clamp(34px, 5vw, 58px); line-height: 1; color: var(--pink2); text-shadow: 0 4px 0 #ffd4de; }
+  #fin-sub { margin: 0; font-size: 18px; line-height: 1.45; }
+  #fin-stars { display: flex; gap: 10px; }
+  #fin-stars i { width: 54px; height: 54px; background: #eadfe6; clip-path: polygon(50% 0, 62% 36%, 100% 38%, 70% 60%, 80% 100%, 50% 76%, 20% 100%, 30% 60%, 0 38%, 38% 36%); transform: scale(0); animation: pop .5s cubic-bezier(.3,1.8,.5,1) forwards; }
+  #fin-stars i.on { background: linear-gradient(#fff0a8, #ffc93c); }
+  @keyframes pop { to { transform: scale(1); } }
+  .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .stats div { background: #fff; border-radius: 20px; padding: 10px 14px; box-shadow: inset 0 -4px 0 rgba(200,160,180,.18); }
+  .stats small { display: block; color: var(--ink2); font-weight: 600; font-size: 13px; }
+  .stats b { font-size: 28px; }
+  #fin-parade { display: flex; flex-wrap: wrap; gap: 2px; min-height: 10px; }
+  #fin-parade img { height: 54px; animation: hop 1.4s ease-in-out infinite; filter: drop-shadow(0 3px 3px rgba(90,40,80,.2)); }
+  .fbtns { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 4px; }
+
+  /* ——— táctil ——— */
+  #touch { display: none; position: fixed; inset: auto 0 0 0; padding: 0 22px max(22px, env(safe-area-inset-bottom)); justify-content: space-between; align-items: flex-end; z-index: 6; pointer-events: none; }
+  .touch.playing #touch { display: flex; }
+  .tgroup { display: flex; gap: 14px; pointer-events: auto; align-items: flex-end; }
+  .tb { width: 78px; height: 78px; border-radius: 50%; border: 0; background: rgba(255,255,255,.72); font-size: 32px; color: var(--ink); box-shadow: inset 0 -6px 0 rgba(120,80,110,.14), 0 8px 18px rgba(90,50,80,.2); backdrop-filter: blur(4px); touch-action: none; }
+  .tb.down { transform: scale(.9); background: #fff; }
+  .tb.big { width: 96px; height: 96px; background: rgba(255,160,190,.85); color: #fff; }
+  #btn-hola { display: none; width: auto; padding: 0 22px; border-radius: 99px; height: 60px; font-size: 20px; font-weight: 700; background: rgba(143,216,192,.95); color: #fff; }
+  #btn-hola.show { display: block; }
+
+  #rotate { display: none; position: fixed; inset: 0; z-index: 60; background: radial-gradient(circle at 50% 40%, #fff7ee, #f6dfe8 60%, #cfe9df); flex-direction: column; align-items: center; justify-content: center; gap: 18px; text-align: center; padding: 24px; font-weight: 600; font-size: 20px; }
+  #rotate .phone { width: 70px; height: 116px; border: 6px solid var(--ink); border-radius: 18px; animation: rot 2.2s ease-in-out infinite; }
+  @keyframes rot { 0%, 30% { transform: rotate(0); } 60%, 100% { transform: rotate(-90deg); } }
+  @media (orientation: portrait) and (pointer: coarse) { #rotate { display: flex; } }
+  @media (max-width: 760px) {
+    #enc-card, #fin-card { grid-template-columns: 1fr; gap: 16px; padding: 18px; border-radius: 30px; }
+    .vwrap { max-width: 320px; width: 100%; margin: 0 auto; }
+    #enc-desc { font-size: 16px; }
+    .pill { font-size: 18px; padding: 4px 12px 4px 6px; } .pill .ico { width: 28px; height: 28px; }
+    #hud-hearts i { font-size: 22px; }
+    .ibtn { width: 42px; height: 42px; font-size: 18px; }
+    .hgroup { gap: 6px; }
+  }
+  @media (max-height: 520px) {
+    .pill { font-size: 17px; padding: 3px 12px 3px 5px; } .pill .ico { width: 26px; height: 26px; font-size: 15px; }
+    #hud-hearts i { font-size: 20px; }
+    .ibtn { width: 38px; height: 38px; font-size: 16px; }
+    #banner small { font-size: 13px; }
+    .tb { width: 64px; height: 64px; font-size: 26px; } .tb.big { width: 80px; height: 80px; }
+    #intro video { width: min(46vh, 80vw); border-radius: 24px; } #intro { gap: 12px; }
+    #enc-card, #fin-card { grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); padding: 16px; gap: 16px; }
+    #enc-desc { font-size: 15px; } #enc-name { font-size: 30px; }
+    .subtitle { margin-bottom: 12px; }
+  }
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<div id="rotate"><div class="phone"></div>Gira el móvil para jugar<br>¡Los Mashmellous son muy anchos!</div>
+
+<div id="loading" class="overlay open">
+  <div class="blob"></div>
+  <div class="bar"><div id="load-bar"></div></div>
+  <p>Amasando el mundo esponjoso…</p>
+</div>
+
+<div id="title" class="overlay">
+  <div class="logo" aria-label="Mashmellous">
+    <span style="--c:#ff8fab;--d:#e0647f;--i:0;--r:-4deg">M</span><span style="--c:#ffc36b;--d:#e09a3c;--i:1;--r:3deg">a</span><span style="--c:#8fd8c0;--d:#5aae94;--i:2;--r:-3deg">s</span><span style="--c:#b9a3ff;--d:#8d74de;--i:3;--r:4deg">h</span><span style="--c:#9fd9ff;--d:#6aaedc;--i:4;--r:-2deg">m</span><span style="--c:#ff8fab;--d:#e0647f;--i:5;--r:3deg">e</span><span style="--c:#ffc36b;--d:#e09a3c;--i:6;--r:-4deg">l</span><span style="--c:#8fd8c0;--d:#5aae94;--i:7;--r:2deg">l</span><span style="--c:#b9a3ff;--d:#8d74de;--i:8;--r:-3deg">o</span><span style="--c:#9fd9ff;--d:#6aaedc;--i:9;--r:4deg">u</span><span style="--c:#ff8fab;--d:#e0647f;--i:10;--r:-2deg">s</span>
+  </div>
+  <div class="subtitle">✦ La Gran Tarta ✦</div>
+  <div class="tbtns">
+    <button id="t-play" class="clay">¡A jugar!</button>
+    <button id="t-album" class="clay mint">Mashmellopedia</button>
+  </div>
+  <div class="hint keys">← → moverse · Espacio saltar (¡dos veces!) · E saludar · Tab álbum · M sonido</div>
+  <div id="t-parade"></div>
+</div>
+
+<div id="intro" class="overlay">
+  <button id="intro-skip" class="clay soft small">Saltar ⏭</button>
+  <video id="intro-video" muted loop playsinline preload="auto"></video>
+  <div id="intro-text"></div>
+  <div id="intro-dots"></div>
+  <div class="tap">toca o pulsa Espacio para continuar</div>
+</div>
+
+<div id="hud">
+  <div class="hgroup">
+    <div class="pill"><span class="ico" style="background:#fff3c4">⭐</span><span id="hud-sparks">0</span></div>
+    <div class="pill" id="hud-hearts"></div>
+  </div>
+  <div class="hgroup">
+    <div class="pill"><span class="ico" style="background:#ffe1ea">💖</span><span id="hud-friends">0/16</span></div>
+    <button class="ibtn" id="btn-album" title="Mashmellopedia (Tab)">📖</button>
+    <button class="ibtn" id="btn-mute" title="Sonido (M)">🎵</button>
+    <button class="ibtn" id="btn-pause" title="Pausa (Esc)">⏸</button>
+  </div>
+</div>
+<div id="banner"><small>Zona 1</small><b>Pradera de Algodón</b></div>
+
+<div id="encounter" class="overlay">
+  <div id="enc-card">
+    <div class="vwrap"><video id="enc-video" muted loop playsinline preload="auto"></video><span id="enc-new">¡Nuevo!</span></div>
+    <div class="einfo">
+      <span id="enc-num">#01</span>
+      <h2 id="enc-name">—</h2>
+      <span id="enc-kind">—</span>
+      <p id="enc-desc"></p>
+      <div id="enc-stats"></div>
+      <button id="enc-btn" class="clay">¡Amigos para siempre! 💖</button>
+    </div>
+  </div>
+  <div id="confetti"></div>
+</div>
+
+<div id="album" class="overlay">
+  <div class="panel">
+    <div class="phead">
+      <div><h2>📖 Mashmellopedia</h2><span id="album-count"></span></div>
+      <button id="album-close" class="clay soft small">Cerrar ✕</button>
+    </div>
+    <div id="album-grid"></div>
+  </div>
+</div>
+
+<div id="pause" class="overlay">
+  <h2>Pausa</h2>
+  <div class="ctrls">
+    <kbd>← →</kbd><span>moverse</span>
+    <kbd>Espacio</kbd><span>saltar (y otra vez en el aire)</span>
+    <kbd>E</kbd><span>saludar a un Mashmellous</span>
+    <kbd>Tab</kbd><span>Mashmellopedia</span>
+    <kbd>M</kbd><span>sonido</span>
+  </div>
+  <div class="tbtns">
+    <button id="p-resume" class="clay">Seguir</button>
+    <button id="p-restart" class="clay soft">Empezar de nuevo</button>
+  </div>
+</div>
+
+<div id="finale" class="overlay">
+  <div id="fin-card">
+    <div class="vwrap"><video id="fin-video" muted loop playsinline preload="auto"></video></div>
+    <div class="einfo">
+      <div id="fin-stars"></div>
+      <h2 id="fin-title">¡Feliz Gran Tarta!</h2>
+      <p id="fin-sub"></p>
+      <div class="stats">
+        <div><small>Tiempo</small><b id="fin-time">0:00</b></div>
+        <div><small>Amigos</small><b id="fin-friends">0/16</b></div>
+        <div><small>Chispas de azúcar</small><b id="fin-sparks">0</b></div>
+        <div><small>Grumos contentos</small><b id="fin-happy">0</b></div>
+      </div>
+      <div id="fin-parade"></div>
+      <div class="fbtns">
+        <button id="fin-again" class="clay">Jugar otra vez</button>
+        <button id="fin-stay" class="clay mint">Seguir de fiesta 🎉</button>
+      </div>
+    </div>
+  </div>
+  <div id="confetti-f"></div>
+</div>
+
+<div id="touch">
+  <div class="tgroup">
+    <button class="tb" data-key="L" aria-label="Izquierda">◀</button>
+    <button class="tb" data-key="R" aria-label="Derecha">▶</button>
+  </div>
+  <div class="tgroup">
+    <button class="tb" id="btn-hola">¡Hola! 👋</button>
+    <button class="tb big" data-key="J" aria-label="Saltar">⤒</button>
+  </div>
+</div>
+
+<script src="assets/manifest.js"></script>
+<script src="js/data.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/world.js"></script>
+<script src="js/game.js"></script>
+</body>
+</html>
